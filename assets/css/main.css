@@ -1,0 +1,17 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  html,
+  body {
+    width: 100%;
+    height: 100%;
+    background-color: rgb(240, 248, 252);
+  }
+
+  .btn-header {
+    @apply text-white px-8 text-center hover:text-black cursor-pointer;
+    line-height: 5rem;
+  }
+}

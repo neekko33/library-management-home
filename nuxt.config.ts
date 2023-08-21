@@ -6,7 +6,7 @@ export default defineNuxtConfig({
       extensions: ['.vue'],
     },
   ],
-  devtools: { enabled: true },
+  devtools: { enabled: false },
   css: ['~/assets/css/main.css'],
   postcss: {
     plugins: {

@@ -1,67 +1,33 @@
 <script setup>
-const state = reactive({
-  search: ''
-})
-
-const handleKeyDown = (key) => {
-  if (key.key !== 'Enter') return
-  console.log(key)
+const router = useRouter()
+const { data: notices } = await useFetch('http://localhost:7001/api/notices/')
+const handleSearch = (search) => {
+  router.push('/search?s=' + search)
 }
 </script>
 
 <template>
   <div>
-    <div class="flex my-20 mx-auto w-2/5 justify-between">
-      <div class="search bg-white flex items-center">
-        <i class="searchIcon"></i>
-        <div class="searchBar flex-1 pr-5">
-          <input v-model="state.search" type="text" placeholder="请输入图书检索关键字" @keydown="handleKeyDown" />
-        </div>
-      </div>
-      <div class="btn bg-sky-500 hover:bg-sky-400">
-        馆内检索
+    <SearchBar class="my-20" @search="handleSearch" />
+    <div class="w-2/5 my-24 mx-auto ">
+      <div class="text-xl font-bold">近期公告</div>
+      <div>
+        <NuxtLink v-for="(item, index) in notices.data" :key="index"
+          class="my-4 hover:text-sky-500 cursor-pointer flex justify-between" :to="'/notice?id=' + item.NoticeID">
+          <div class="w-4/5 truncate"><span class="icon"></span> {{ item.Title }}</div>
+          <div class="w-1/5 truncate">[{{ formattedDate(item.CreationDate) }}]</div>
+        </NuxtLink>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-.search {
-  width: 90%;
-  vertical-align: middle;
-  height: 56px;
-  box-shadow: 0px 0px 3px 1px #dadada;
-}
-
-.btn {
-  height: 56px;
-  margin-left: 15px;
-  width: 150px;
-  text-align: center;
-  line-height: 56px;
-  color: #fff;
-  border-radius: 2px;
-  cursor: pointer;
-}
-
-.searchIcon {
-  width: 17px;
-  height: 16px;
-  background: url(/ser-icon03.png) no-repeat;
-  vertical-align: middle;
+.icon {
+  background: url(/list-icon.png) no-repeat;
+  background-position: 50%;
+  width: 15px;
+  height: 10px;
   display: inline-block;
-  margin: 0 20px;
-}
-
-.searchBar input {
-  font-size: 14px;
-  width: 100%;
-  height: 56px;
-  line-height: 56px;
-  color: #333;
-  padding: 0 3px 0 10px;
-  border: none;
-  background: none;
-  outline: none;
 }
 </style>

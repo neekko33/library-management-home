@@ -9,7 +9,7 @@ const handlePageChange = () => {
 <template>
   <div class="w-full h-full px-7">
     <SearchBar class="my-5" />
-    <div class="w-4/5 bg-white flex mx-auto" style="height: 79vh;">
+    <div class="w-4/5 bg-white flex mx-auto shadow-md" style="height: 79vh;">
       <div class="h-full w-2/12 overflow-y-auto px-5 py-3 border-r-2 ">
         <div class="font-bold text-sky-500 text-xl my-3">中图法分类</div>
         <div class="w-11/12 truncate my-1 hover:text-sky-500 hover:bg-slate-100 cursor-pointer"

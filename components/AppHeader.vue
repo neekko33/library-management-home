@@ -1,11 +1,11 @@
 <template>
   <div class="bg-sky-500 h-20 w-full flex justify-between px-20 ">
-    <div class="logo">
-    </div>
+    <NuxtLink class="logo cursor-pointer" to="/">
+    </NuxtLink>
     <div class="flex justify-center items-center">
-      <div class="btn-header">
+      <NuxtLink class="btn-header" to="/">
         首页
-      </div>
+      </NuxtLink>
       <div class="btn-header">
         个人图书馆
       </div>

@@ -1,5 +1,8 @@
 <script setup>
 const search = ref('')
+const props = defineProps({
+  s: String
+})
 const emit = defineEmits(['search'])
 const handleKeyDown = (key) => {
   if (key.key !== 'Enter') return
@@ -8,6 +11,11 @@ const handleKeyDown = (key) => {
 const handleClick = () => {
   emit('search', search.value)
 }
+
+if (props.s) {
+  search.value = props.s
+}
+
 </script>
 <template>
   <div class="flex mx-auto w-2/5 justify-between">

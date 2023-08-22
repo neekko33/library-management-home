@@ -23,6 +23,7 @@ const searchBooks = async () => {
   state.books = result.data
   state.total = result.total
   state.page = result.page
+  // TODO:分类信息不能在前端处理，需要从后端获取数据
   const categories = []
   state.books.map(item => {
     if (categories.findIndex(itm => itm.CategoryID == item.Categories.CategoryID) !== -1) return

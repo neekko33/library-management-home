@@ -11,7 +11,7 @@
   }
 
   .btn-header {
-    @apply text-white px-8 text-center hover:text-black cursor-pointer;
+    @apply text-white px-8 text-center hover:text-black cursor-pointer text-base;
     line-height: 5rem;
   }
 }

@@ -14,7 +14,15 @@ const state = reactive({
     confirmPassword: ''
   },
   formLableWidth: '100px',
-  borrowNow: null
+  borrowNow: null,
+  borrowNowTotal: 0,
+  borrowNowPage: 1,
+  borrowHistory: null,
+  borrowHistoryTotal: 0,
+  borrowHistoryPage: 1,
+  fine: null,
+  fineTotal: 0,
+  finePage: 1
 })
 const readerId = Cookies.get('readerId')
 if (!readerId) {
@@ -37,9 +45,26 @@ const getUserInfo = async () => {
 }
 
 const getBorrowNow = async () => {
-  const { data: result } = await useFetch(`http://localhost:7001/api/borrows/${state.readerId}`)
+  const { data: result } = await useFetch(`http://localhost:7001/api/borrows/${state.readerId}?page=${state.borrowNowPage}`)
   if (result.value) {
     state.borrowNow = result.value.data
+    state.borrowNowTotal = result.value.total
+  }
+}
+
+const getBorrowHistory = async () => {
+  const { data: result } = await useFetch(`http://localhost:7001/api/borrows/history/${state.readerId}?page=${state.borrowHistoryPage}`)
+  if (result.value) {
+    state.borrowHistory = result.value.data
+    state.borrowHistoryTotal = result.value.total
+  }
+}
+
+const getFine = async () => {
+  const { data: result } = await useFetch(`http://localhost:7001/api/borrows/history/${state.readerId}?page=${state.borrowHistoryPage}`)
+  if (result.value) {
+    state.fine = result.value.data
+    state.fineTotal = result.value.total
   }
 }
 
@@ -47,16 +72,21 @@ const handleClick = event => {
   state.activeIndex = event.index
 }
 
-watch(() => state.activeIndex, async (newValue, oldValue) => {
+watch(() => state.activeIndex, (newValue, oldValue) => {
   switch (newValue) {
+    case '1':
+      getUserInfo()
+      break
     case '2':
-      await getBorrowNow()
+      getBorrowNow()
+      break
+    case '3':
+      getBorrowHistory()
       break
   }
 })
 
 getUserInfo()
-
 </script>
 <template>
   <div class="common-layout w-3/5 h-full mx-auto my-8">
@@ -108,39 +138,83 @@ getUserInfo()
         <template v-if="state.activeIndex === '1'">
           <div class="font-bold text-xl">修改个人资料</div>
           <div class="border-dashed border-2 mt-5 py-14 px-28">
-            <el-form :model="state.infoForm" label-position="top">
-              <el-form-item label="用户名" :label-width="state.formLabelWidth">
-                <el-input v-model="state.infoForm.name" autocomplete="off" disabled />
-              </el-form-item>
-              <el-form-item label="手机号" :label-width="state.formLabelWidth">
-                <el-input v-model="state.infoForm.phone" autocomplete="off" />
-              </el-form-item>
-              <el-form-item label="邮箱" :label-width="state.formLabelWidth">
-                <el-input v-model="state.infoForm.email" autocomplete="off" />
-              </el-form-item>
-              <div class="w-full h-10 flex items-center justify-center mt-10">
-                <button class="w-3/5 h-full bg-sky-500 my-5 text-white hover:bg-sky-400 rounded-md">确认修改</button>
-              </div>
-            </el-form>
+            <ClientOnly>
+              <el-form :model="state.infoForm" label-position="top">
+                <el-form-item label="用户名" :label-width="state.formLabelWidth">
+                  <el-input v-model="state.infoForm.name" autocomplete="off" disabled />
+                </el-form-item>
+                <el-form-item label="手机号" :label-width="state.formLabelWidth">
+                  <el-input v-model="state.infoForm.phone" autocomplete="off" />
+                </el-form-item>
+                <el-form-item label="邮箱" :label-width="state.formLabelWidth">
+                  <el-input v-model="state.infoForm.email" autocomplete="off" />
+                </el-form-item>
+                <div class="w-full h-10 flex items-center justify-center mt-10">
+                  <button class="w-3/5 h-full bg-sky-500 my-5 text-white hover:bg-sky-400 rounded-md">确认修改</button>
+                </div>
+              </el-form>
+            </ClientOnly>
           </div>
         </template>
         <!-- TODO: 继续写当前借阅循环逻辑 -->
         <template v-else-if="state.activeIndex === '2'">
-          <el-descriptions direction="vertical" :column="5" size="default" border>
-            <el-descriptions-item label="序号">{{ index + 1 }}</el-descriptions-item>
-            <el-descriptions-item label="图书名称">kooriookami</el-descriptions-item>
-            <el-descriptions-item label="借阅时间">18100000000</el-descriptions-item>
-            <el-descriptions-item label="应归还时间">Suzhou</el-descriptions-item>
-            <el-descriptions-item label="是否逾期">
-              <el-tag size="small">School</el-tag>
-            </el-descriptions-item>
-          </el-descriptions>
+          <ClientOnly>
+            <el-descriptions direction="vertical" :column="6" size="default" border
+              v-for="(item, index) in state.borrowNow" :key="index" class="my-3">
+              <el-descriptions-item label="序号">{{ index + 1 }}</el-descriptions-item>
+              <el-descriptions-item label="图书名称" width="350px">{{ item.Books.Title }}</el-descriptions-item>
+              <el-descriptions-item label="借阅时间">{{ formattedDate(item.BorrowDate) }}</el-descriptions-item>
+              <el-descriptions-item label="应归还时间">{{ formattedDate(item.DueDate) }}</el-descriptions-item>
+              <el-descriptions-item label="是否逾期">
+                <el-tag v-if="item.IsOverdue" size="small" type="error">逾期</el-tag>
+                <el-tag v-else size="small" type="success">未逾期</el-tag>
+              </el-descriptions-item>
+              <el-descriptions-item label="操作">
+                <el-button v-if="item.IsOverdue" size="small" type="danger">查看罚款</el-button>
+                <el-button v-else size="small" type="primary">续借图书</el-button>
+              </el-descriptions-item>
+            </el-descriptions>
+            <div class="w-full flex items-center justify-center">
+              <el-pagination layout="prev, pager, next" :total="50" background v-model:current-page="state.borrowNowPage"
+                hide-on-single-page class="mt-7" />
+            </div>
+          </ClientOnly>
         </template>
         <template v-else-if="state.activeIndex === '3'">
-          3
+          <ClientOnly>
+            <el-descriptions direction="vertical" :column="6" size="default" border
+              v-for="(item, index) in state.borrowHistory" :key="index" class="my-3">
+              <el-descriptions-item label="序号">{{ index + 1 }}</el-descriptions-item>
+              <el-descriptions-item label="图书名称" width="350px">{{ item.Books.Title }}</el-descriptions-item>
+              <el-descriptions-item label="借阅时间">{{ formattedDate(item.BorrowDate) }}</el-descriptions-item>
+              <el-descriptions-item label="归还时间">{{ formattedDate(item.ReturnDate) }}</el-descriptions-item>
+            </el-descriptions>
+            <div class="w-full flex items-center justify-center">
+              <el-pagination layout="prev, pager, next" :total="50" background
+                v-model:current-page="state.borrowHistoryPage" hide-on-single-page class="mt-7" />
+            </div>
+          </ClientOnly>
         </template>
         <template v-else-if="state.activeIndex === '4'">
-          4
+          <ClientOnly>
+            <el-descriptions direction="vertical" :column="6" size="default" border v-for="(item, index) in  state.fine "
+              :key="index" class="my-3">
+              <el-descriptions-item label="序号">{{ index + 1 }}</el-descriptions-item>
+              <el-descriptions-item label="图书名称" width="350px">{{ item.Books.Title }}</el-descriptions-item>
+              <el-descriptions-item label="罚款金额">{{ formattedDate(item.DueDate) }}</el-descriptions-item>
+              <el-descriptions-item label="是否支付">
+                <el-tag v-if="item.IsPaid" size="small" type="success">已支付</el-tag>
+                <el-tag v-else size="small" type="error">未支付</el-tag>
+              </el-descriptions-item>
+              <el-descriptions-item label="操作">
+                <el-button v-if="!item.IsPaid" size="small" type="primary">支付罚款</el-button>
+              </el-descriptions-item>
+            </el-descriptions>
+            <div class="w-full flex items-center justify-center">
+              <el-pagination layout="prev, pager, next" :total="50" background v-model:current-page="state.finePage"
+                hide-on-single-page class="mt-7" />
+            </div>
+          </ClientOnly>
         </template>
         <template v-else>
           <div class="font-bold text-xl">修改密码</div>

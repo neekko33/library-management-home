@@ -4,9 +4,8 @@ const state = reactive({
   total: 0,
   page: 1,
   books: null,
-  AllCategories: null,
   categories: null,
-  categoryId: 0
+  categoryId: 0,
 })
 
 // const categories = ref(null)
@@ -15,7 +14,7 @@ state.search = route.query.s || ''
 
 const getCategories = async () => {
   const { data: { value: result } } = await useFetch('http://localhost:7001/api/categories/all')
-  state.AllCategories = result.data
+  state.categories = result.data
 }
 
 const searchBooks = async () => {
@@ -23,17 +22,6 @@ const searchBooks = async () => {
   state.books = result.data
   state.total = result.total
   state.page = result.page
-  // TODO:分类信息不能在前端处理，需要从后端获取数据
-  const categories = []
-  state.books.map(item => {
-    if (categories.findIndex(itm => itm.CategoryID == item.Categories.CategoryID) !== -1) return
-    categories.push({
-      CategoryID: item.Categories.CategoryID,
-      CategoryName: state.AllCategories.find(itm => itm.CategoryID == item.Categories.CategoryID).CategoryName
-    })
-  })
-  categories.sort((a, b) => a.CategoryID - b.CategoryID)
-  state.categories = categories
 }
 
 const handleSearch = async (s) => {
@@ -48,11 +36,18 @@ const defaultImg = (event) => {
   // img.onerror = null
 }
 
+const handleClickCategory = async (item) => {
+  state.categoryId = state.categoryId === item.CategoryID ? 0 : item.CategoryID
+  state.page = 1
+  const { data: { value: result } } = await useFetch(`http://localhost:7001/api/books/home/search?search=${state.search}&page=${state.page}&categoryId=${state.categoryId}`)
+  state.books = result.data
+  state.total = result.total
+  state.page = result.page
+}
+
 watch(() => state.page, (newValue, oldValue) => {
   searchBooks()
 })
-
-
 
 getCategories()
 searchBooks()
@@ -66,13 +61,14 @@ searchBooks()
       <div class="h-full w-2/12 overflow-y-auto px-5 py-3 border-r-2 ">
         <div class="font-bold text-sky-500 text-xl my-3">中图法分类</div>
         <div class="w-11/12 truncate my-1 hover:text-sky-500 hover:bg-slate-100 cursor-pointer"
+          :class="{ 'selected': item.CategoryID === state.categoryId }" @click="handleClickCategory(item)"
           v-for="(item, index) in state.categories" :key="index">- {{
             item.CategoryName }}</div>
       </div>
       <div class="flex-1 overflow-y-auto p-5 divide-y divide-dashed innerbox">
         <div class="mb-7">检索结果共有：<span class="text-sky-500 font-bold">{{ state.total }}</span> 条</div>
         <ClientOnly>
-          <div class="flex h-36 " v-for="(item, index) in state.books" :key="index">
+          <div class="flex h-36" v-for="(item, index) in state.books" :key="index">
             <div class="w-2/12 h-full flex items-center justify-center">
               <img :src="item.ImgUrl || '/book-default.jpg'" :onerror="defaultImg" class="h-4/5 mx-auto" />
             </div>
@@ -185,5 +181,12 @@ svg {
   -webkit-box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
   border-radius: 0;
   background: rgba(14, 165, 233, 0.1);
+}
+
+:deep(.el-descriptions__cell) {
+  max-width: 400px !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 </style>

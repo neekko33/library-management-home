@@ -14,4 +14,8 @@
     @apply text-white px-8 text-center hover:text-black cursor-pointer text-base;
     line-height: 5rem;
   }
+
+  .selected {
+    @apply text-sky-500 bg-slate-100 font-bold;
+  }
 }
